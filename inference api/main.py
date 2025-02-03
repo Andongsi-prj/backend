@@ -12,7 +12,7 @@ import traceback
 app = FastAPI()
 
 # YOLOv8 모델 로드
-model = YOLO("inference api/best.pt")
+model = YOLO("best.pt")
 labels = model.names  # YOLO 모델에서 클래스 이름 가져오기
 
 # 입력 데이터 스키마 정의
