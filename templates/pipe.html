@@ -13,57 +13,37 @@
 
 </head>
 <body>
-
 	<header>
-
 		<div class="inner">
-
 			<div class="logo-container">
 				<img class="logo" src="{{ url_for('static', filename='image/ANU.jpg') }}" onclick="location.href='/'">
 				<span>파이프 실시간 검사</span>
 			</div>
-
-
 			<div class="icons">
 				<i class="fa-solid fa-house" onclick="location.href='/'"></i>
 				<i class="fa-solid fa-database" onclick="location.href='http://192.168.0.163:8088/superset/dashboard/18/?native_filters_key=jHEo3BzL6Y4'"></i>
 				<i class="fa-solid fa-newspaper" onclick="location.href='/news'"></i>
 			</div>
-
 		</div>
-
 	</header>
 
-
-
 	<div class="img-container">
-		<img 
-		class="pipe-img"
-		src="{{ url_for('static', filename='image/belt.png') }}"
-		>
+		<img class="pipe-img" src="{{ url_for('static', filename='image/belt.png') }}">
 		
 		<div class="content-wrapper">
-
-			<section>
-				<div class="conveyor-container">
-					<div class="belt"></div>
+			<div class="conveyor-container">
+				<div class="belt">
 					<div class="detection-zone">
 						<div class="scanner-animation"></div>
 					</div>
 				</div>
-			</section>
-
+			</div>
 			
 			<div class="log-container">
 				<span>검사 로그</span>
 				<ul id="log-list" class="log-list"></ul>
 			</div>
-
 		</div>
-
-
 	</div>
-
-
 </body>
 </html>

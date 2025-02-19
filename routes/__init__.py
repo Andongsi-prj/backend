@@ -5,6 +5,7 @@ from .login_route import login_route
 from .loginck_route import loginck_route
 from .images_route import images_route
 from .kafka_route import kafka_route
+from .slack_route import slack_route
 
 blueprints = [
    (site_route,"/"),
@@ -13,9 +14,9 @@ blueprints = [
    (login_route,"/api/login"),
    (loginck_route,"/api/loginck"),
    (images_route,"/api/images"),
-   (kafka_route,"/api/logs")
+   (kafka_route,"/api/logs"),
+   (slack_route,"/api/slack")
 ]
-
 
 def register_blueprints(app):
     app.secret_key = 'your-secret-key-here'

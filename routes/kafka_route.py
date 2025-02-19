@@ -6,7 +6,7 @@ from datetime import datetime
 kafka_route = Blueprint('kafka', __name__)
 
 # Kafka 프로듀서 설정
-KAFKA_BOOTSTRAP_SERVERS = '192.168.0.163:9092'  # Kafka 서버 주소
+KAFKA_BOOTSTRAP_SERVERS = '5gears.iptime.org:9092'  # Kafka 서버 주소
 KAFKA_TOPIC_LOGS = 'logs'        # 로그용 토픽
 KAFKA_TOPIC_IMAGES = 'kafka-ig'    # 이미지용 토픽
 
