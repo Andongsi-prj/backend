@@ -2,10 +2,10 @@ import requests
 from flask import Blueprint, request, jsonify
 
 pipe_route = Blueprint('pipe', __name__)
-FASTAPI_URL = "http://192.168.0.163:8000/predict/"
+FASTAPI_URL = "http://192.168.0.163:8001/predict/"
 
 @pipe_route.route("/pipe", methods=['POST'])
-def predict():
+def predict():  
     try:
         # Base64 데이터 수신
         image_data = request.json.get('image_base64')

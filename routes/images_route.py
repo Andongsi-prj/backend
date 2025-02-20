@@ -12,7 +12,7 @@ images_route = Blueprint('images_route', __name__)
 consumer = KafkaConsumer(
     'aa_topic',  # Topic 이름 (프로듀서와 동일한 토픽 사용)
     bootstrap_servers=['192.168.0.163:9092'],  # Kafka 브로커 주소
-    auto_offset_reset='earliest',  # 처음부터 메시지 읽기
+    auto_offset_reset='latest',  # 최신 메시지부터 읽기
     enable_auto_commit=True,  # 자동 오프셋 커밋
     group_id='image_consumer_group',  # Consumer 그룹 ID
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # JSON 역직렬화
@@ -57,6 +57,26 @@ def get_images():
         }), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+
+# @images_route.route('/queue-status', methods=['GET'])
+# def get_queue_status():
+#     """큐의 현재 상태를 반환합니다"""
+#     try:
+#         queue_size = message_queue.qsize()
+#         return jsonify({
+#             'status': 'success',
+#             'queue_size': queue_size,
+#             'has_messages': not message_queue.empty()
+#         }), 200
+#     except Exception as e:
+#         return jsonify({
+#             'status': 'error',
+#             'message': str(e)
+#         }), 500
+
+
 
 
 

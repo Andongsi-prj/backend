@@ -6,10 +6,6 @@ site_route = Blueprint('site', __name__)
 def home():
     return render_template("front.html")
 
-@site_route.route("/data")
-def data():
-    return render_template("data.html")
-
 @site_route.route("/pipe")
 def pipe():
     return render_template("pipe.html")
