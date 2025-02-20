@@ -102,7 +102,7 @@ def consume_kafka_messages():
     """Kafka 메시지를 소비하고 처리 완료 후 ACK 신호를 전송"""
     try:
         for message in consumer:
-            if stop_event.is_set():  # Check stop event inside loop
+            if stop_event.is_set():
                 break
             data = message.value
             plt_number = data.get('plt_number')
@@ -125,9 +125,15 @@ def consume_kafka_messages():
 
 @images_route.route('/images', methods=['POST'])
 def get_images():
-    global threads_started
+    global threads_started, stop_event
 
+    # Stop 이벤트 초기화
+    if stop_event.is_set():
+        stop_event.clear()
+
+    # 스레드가 시작되지 않은 경우에만 시작
     if not threads_started:
+        print("Starting threads...")
         threading.Thread(target=fetch_and_send_images, daemon=True).start()
         threading.Thread(target=consume_kafka_messages, daemon=True).start()
         threads_started = True
@@ -137,8 +143,6 @@ def get_images():
 
     while message_queue.empty():
         elapsed_time = time.time() - start_time
-        print(f"Queue size before timeout check: {message_queue.qsize()}, Elapsed time: {elapsed_time:.2f}s")
-        
         if elapsed_time > timeout:
             return jsonify({'message': 'No images available yet.'}), 404
         
@@ -156,6 +160,5 @@ def get_images():
 def stop_threads():
     global stop_event
 
-    # Signal threads to stop
-    stop_event.set()
+    stop_event.set()  # Stop 이벤트 활성화로 스레드 종료 신호 전달
     return jsonify({'message': 'Threads are stopping...'}), 200
