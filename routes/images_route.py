@@ -5,14 +5,15 @@ import time
 import json
 from queue import Queue
 import threading
+from threading import Event
 from db import get_db_connection
 
 images_route = Blueprint('images_route', __name__)
 
 # Kafka 설정
 KAFKA_BROKER = '5gears.iptime.org:9092'
-TOPIC_NAME = 'process_topic'
-ACK_TOPIC = 'ack_topic'
+TOPIC_NAME = 'process1_topic'
+ACK_TOPIC = 'ack1_topic'
 
 # Kafka Producer 설정
 producer = KafkaProducer(
@@ -22,14 +23,6 @@ producer = KafkaProducer(
 
 # Kafka Consumer 설정
 consumer = KafkaConsumer(
-<<<<<<< HEAD
-    'aa_topic',  # Topic 이름 (프로듀서와 동일한 토픽 사용)
-    bootstrap_servers=['192.168.0.163:9092'],  # Kafka 브로커 주소
-    auto_offset_reset='latest',  # 최신 메시지부터 읽기
-    enable_auto_commit=True,  # 자동 오프셋 커밋
-    group_id='image_consumer_group',  # Consumer 그룹 ID
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # JSON 역직렬화
-=======
     TOPIC_NAME,
     bootstrap_servers=[KAFKA_BROKER],
     auto_offset_reset='earliest',
@@ -45,7 +38,6 @@ ack_consumer = KafkaConsumer(
     group_id='ack_consumer_group',
     auto_offset_reset='earliest',
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
->>>>>>> 58445be5501f17d08260a11cea43f0e11894eff0
 )
 
 # 메시지를 저장할 큐 생성 (FIFO)
@@ -53,6 +45,7 @@ message_queue = Queue()
 
 # 스레드 실행 여부 플래그
 threads_started = False
+stop_event = Event()
 
 # 이미지 인코딩 함수
 def encode_image(image_data):
@@ -64,7 +57,7 @@ def fetch_and_send_images():
         con = get_db_connection()
         last_acknowledged = None
 
-        while True:
+        while not stop_event.is_set():
             with con.cursor() as cur:
                 if last_acknowledged:
                     query = "SELECT img, plt_number FROM plt_img WHERE plt_number > %s ORDER BY plt_number ASC LIMIT 1"
@@ -87,6 +80,8 @@ def fetch_and_send_images():
                     start_time = time.time()
 
                     for ack_message in ack_consumer:
+                        if stop_event.is_set():  # Check stop event inside loop
+                            break
                         ack_data = ack_message.value
                         if ack_data.get('plt_number') == plt_number and ack_data.get('status') == 'processed':
                             print(f"Received ACK for plt_number: {plt_number}")
@@ -107,6 +102,8 @@ def consume_kafka_messages():
     """Kafka 메시지를 소비하고 처리 완료 후 ACK 신호를 전송"""
     try:
         for message in consumer:
+            if stop_event.is_set():
+                break
             data = message.value
             plt_number = data.get('plt_number')
             encoded_image = data.get('encoded_image')
@@ -128,9 +125,15 @@ def consume_kafka_messages():
 
 @images_route.route('/images', methods=['POST'])
 def get_images():
-    global threads_started
+    global threads_started, stop_event
 
+    # Stop 이벤트 초기화
+    if stop_event.is_set():
+        stop_event.clear()
+
+    # 스레드가 시작되지 않은 경우에만 시작
     if not threads_started:
+        print("Starting threads...")
         threading.Thread(target=fetch_and_send_images, daemon=True).start()
         threading.Thread(target=consume_kafka_messages, daemon=True).start()
         threads_started = True
@@ -140,35 +143,11 @@ def get_images():
 
     while message_queue.empty():
         elapsed_time = time.time() - start_time
-        print(f"Queue size before timeout check: {message_queue.qsize()}, Elapsed time: {elapsed_time:.2f}s")
-        
         if elapsed_time > timeout:
             return jsonify({'message': 'No images available yet.'}), 404
         
         time.sleep(1)
 
-<<<<<<< HEAD
-# @images_route.route('/queue-status', methods=['GET'])
-# def get_queue_status():
-#     """큐의 현재 상태를 반환합니다"""
-#     try:
-#         queue_size = message_queue.qsize()
-#         return jsonify({
-#             'status': 'success',
-#             'queue_size': queue_size,
-#             'has_messages': not message_queue.empty()
-#         }), 200
-#     except Exception as e:
-#         return jsonify({
-#             'status': 'error',
-#             'message': str(e)
-#         }), 500
-
-
-
-
-
-=======
     print(f"Queue size : {message_queue.qsize()}")
     next_message = message_queue.get()
     return jsonify({
@@ -176,4 +155,10 @@ def get_images():
         'plt_number': next_message['plt_number'],
         'image': next_message['encoded_image']
     }), 200
->>>>>>> 58445be5501f17d08260a11cea43f0e11894eff0
+
+@images_route.route('/stop_threads', methods=['POST'])
+def stop_threads():
+    global stop_event
+
+    stop_event.set()  # Stop 이벤트 활성화로 스레드 종료 신호 전달
+    return jsonify({'message': 'Threads are stopping...'}), 200

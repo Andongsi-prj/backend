@@ -15,7 +15,10 @@ $(document).ready(function () {
         maxLogItems: 3,
         logContainer: '#log-list'
     };
-    
+
+    let lastImageLoadedTime = Date.now(); // 마지막 이미지 로드 시간 기록
+    const INACTIVITY_TIMEOUT = 15000; // 60초 동안 비활성화 시 스레드 종료
+
     // 이미지 로드 & 애니메이션
     function loadAndAnimateImage() {
         fetch('/api/images/images', {
@@ -30,6 +33,9 @@ $(document).ready(function () {
                 BELT.append($img);
                 animateImage($img);
                 processedImages.add(data.plt_number);
+
+                // 업데이트: 마지막 이미지 로드 시간 갱신
+                lastImageLoadedTime = Date.now();
                 
                 setTimeout(() => {
                     processedImages.delete(data.plt_number);
@@ -38,6 +44,37 @@ $(document).ready(function () {
         })
         .catch(err => setTimeout(loadAndAnimateImage, 7000));
     }
+
+    function detectInactivity() {
+        let inactivityInterval;
+    
+        // 페이지 활성 상태 변경 감지
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                console.log("페이지 비활성화: 스레드 종료");
+                stopThreads(); // 스레드 종료 요청
+                clearInterval(inactivityInterval); // 비활성화 상태에서 타이머 중단
+            } else if (document.visibilityState === "visible") {
+                console.log("페이지 활성화: 스레드 시작");
+                monitorInactivity(); // 비활성화 감지 재개
+            }
+        });
+    
+        // 비활성화 상태 감지 함수
+        function monitorInactivity() {
+            inactivityInterval = setInterval(() => {
+                const currentTime = Date.now();
+                if (currentTime - lastImageLoadedTime > INACTIVITY_TIMEOUT) {
+                    console.warn("비활성화 감지: 스레드 종료");
+                    stopThreads();
+                    clearInterval(inactivityInterval);
+                }
+            }, 5000); // 5초마다 확인
+        }
+    
+        monitorInactivity(); // 초기 실행
+    }
+    
 
     // 이미지 애니메이션
     function animateImage($img) {
@@ -80,7 +117,6 @@ $(document).ready(function () {
             });
             requestAnimationFrame(checkPositions);
         }
-    
         requestAnimationFrame(checkPositions);
     }    
 
@@ -210,9 +246,23 @@ $(document).ready(function () {
             }
         });
     }
+    
+    function stopThreads() {
+        fetch('/api/images/stop_threads', { method: 'POST' })
+            .then(res => {
+                if (res.ok) {
+                    console.log('스레드가 성공적으로 종료되었습니다.');
+                } else {
+                    console.error('스레드 종료 실패');
+                }
+            })
+            .catch(err => console.error('스레드 종료 중 오류:', err));
+    }
+    
 
     loadAndAnimateImage();
     setInterval(loadAndAnimateImage, SETTINGS.loadInterval);
     detectPosition();
+    detectInactivity();
 });
 
