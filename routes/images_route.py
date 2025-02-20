@@ -93,7 +93,7 @@ def fetch_and_send_images():
                             break
                 else:
                     print("No new images to process.")
-                time.sleep(7)
+                time.sleep(3)
 
     except Exception as e:
         print(f"Error in producer thread: {e}")
