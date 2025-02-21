@@ -12,8 +12,8 @@ images_route = Blueprint('images_route', __name__)
 
 # Kafka 설정
 KAFKA_BROKER = '5gears.iptime.org:9092'
-TOPIC_NAME = 'process1_topic'
-ACK_TOPIC = 'ack1_topic'
+TOPIC_NAME = 'process_topic'
+ACK_TOPIC = 'ack_topic'
 
 # Kafka Producer 설정
 producer = KafkaProducer(
@@ -43,8 +43,7 @@ ack_consumer = KafkaConsumer(
 # 메시지를 저장할 큐 생성 (FIFO)
 message_queue = Queue()
 
-# 스레드 실행 여부 플래그
-threads_started = False
+# Stop 이벤트
 stop_event = Event()
 
 # 이미지 인코딩 함수
@@ -93,7 +92,7 @@ def fetch_and_send_images():
                             break
                 else:
                     print("No new images to process.")
-                time.sleep(7)
+                time.sleep(3)
 
     except Exception as e:
         print(f"Error in producer thread: {e}")
@@ -125,18 +124,23 @@ def consume_kafka_messages():
 
 @images_route.route('/images', methods=['POST'])
 def get_images():
-    global threads_started, stop_event
+    global stop_event
 
-    # Stop 이벤트 초기화
+    # Stop 이벤트 초기화 (스레드를 다시 시작할 수 있도록)
     if stop_event.is_set():
         stop_event.clear()
 
-    # 스레드가 시작되지 않은 경우에만 시작
-    if not threads_started:
-        print("Starting threads...")
-        threading.Thread(target=fetch_and_send_images, daemon=True).start()
-        threading.Thread(target=consume_kafka_messages, daemon=True).start()
-        threads_started = True
+    # 현재 실행 중인 스레드 확인 및 시작
+    active_threads = threading.enumerate()
+    thread_names = [t.name for t in active_threads]
+
+    if "fetch_and_send_images" not in thread_names:
+        print("Starting fetch_and_send_images thread...")
+        threading.Thread(target=fetch_and_send_images, name="fetch_and_send_images", daemon=True).start()
+
+    if "consume_kafka_messages" not in thread_names:
+        print("Starting consume_kafka_messages thread...")
+        threading.Thread(target=consume_kafka_messages, name="consume_kafka_messages", daemon=True).start()
 
     timeout = 10
     start_time = time.time()

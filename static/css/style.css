@@ -132,7 +132,7 @@ header .menu{
 
 .my-card > .title{
     font-size: 25px;
-    font-weight: 700;
+    font-weight: bold;
     color: skyblue;
     margin-top: 10px;
     display: flex;
@@ -142,13 +142,15 @@ header .menu{
 
 
 .my-card > .sub-title{
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
+    text-align: center;
     color: black;
 }
 
 
 .my-card > p{
+    margin-top: 5px;
     font-size: 15px;
     font-weight: 500;
     color: black;

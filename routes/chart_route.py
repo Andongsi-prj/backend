@@ -58,8 +58,6 @@ def show_chart():
         return jsonify({'error': str(e)}), 500
     
 
-
-
 # 원자재 가격 차트
 @chart_route.route('/raw/<commodity_type>')
 def show_raw(commodity_type):
