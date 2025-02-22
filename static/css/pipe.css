@@ -81,7 +81,7 @@ header .icons{
     height: 300px;
     overflow: hidden;
     margin-bottom: 50px;
-    margin-top: 300px;
+    margin-top: 400px;
 }
 
 .belt {
@@ -150,7 +150,7 @@ header .icons{
 /* 검사 로그 */
 .log-container {
     width: 600px;
-    height: 180px;
+    height: 176px;
     text-align: left;
     border: 2px solid #ddd;
     box-sizing: border-box;
